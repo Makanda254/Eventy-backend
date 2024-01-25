@@ -23,8 +23,7 @@ class User(db.Model, SerializerMixin):
     phone = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(450), nullable=False)
     
-    events = db.relationship('Event', backref='user', lazy=True)
-    
+    events = db.relationship('Event', secondary='booked_events', back_populates='users')
     #def generate_token(self, username, id):
         
         #try:
@@ -86,7 +85,7 @@ class Organizer(db.Model, SerializerMixin):
 
 class Event(db.Model, SerializerMixin):
     __tablename__ = 'events'
-    serialize_rules = ('-user.events', '-organizer.events', '-category.events',)
+    serialize_rules = ('-users.events', '-organizer.events', '-category.events',)
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -96,7 +95,8 @@ class Event(db.Model, SerializerMixin):
     end_time = db.Column(db.DateTime, nullable=False)
     organizer_id = db.Column(db.Integer, db.ForeignKey('organizers.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    users = db.relationship('User', secondary='booked_events', back_populates='events')
 
 class Category(db.Model, SerializerMixin):
     __tablename__ = 'categories'
@@ -105,3 +105,12 @@ class Category(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     events = db.relationship('Event', backref='category', lazy=True)
+    
+class BookedEvent(db.Model, SerializerMixin):
+    __tablename__ = 'booked_events'
+    
+    serialize_rules = ('-user.booked_events', '-event.booked_events',)
+    
+    id = db.Column(db.Integer, primary_key= True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))

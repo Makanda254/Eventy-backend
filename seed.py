@@ -1,5 +1,5 @@
 from app import app, db
-from models import Event, Organizer, User, Category
+from models import Event, Organizer, User, Category, BookedEvent
 import random
 from datetime import datetime, timedelta
 from faker import Faker
@@ -11,12 +11,13 @@ with app.app_context():
      Organizer.query.delete()
      User.query.delete()
      Category.query.delete()
+     BookedEvent.query.delete()
      
      print ("Seeding Users...")
      
      users = []
      for _ in range(5):
-        user = User(username=fake.unique.user_name(), email=fake.unique.email(), phone_number=fake.unique.phone_number(), password=fake.password())
+        user = User(username=fake.unique.user_name(), email=fake.unique.email(), phone=fake.unique.phone_number(), password=fake.password())
         users.append(user)
      db.session.add_all(users)
      db.session.commit()
@@ -26,7 +27,7 @@ with app.app_context():
      organizers = []
      
      for _ in range(5):
-        organizer = Organizer(username=fake.unique.user_name(), email=fake.unique.email(), phone_number=fake.unique.phone_number(), password=fake.password())
+        organizer = Organizer(username=fake.unique.user_name(), email=fake.unique.email(), phone=fake.unique.phone_number(), password=fake.password())
         organizers.append(organizer)
      db.session.add_all(organizers)
      db.session.commit()
@@ -48,11 +49,9 @@ with app.app_context():
         image_url = fake.image_url()
         start_time = fake.date_time_between(start_date='now', end_date='+30d')
         end_time = start_time + timedelta(hours=random.randint(1, 6))
-
         organizer = random.choice(organizers)
         category = random.choice(categories)
-        user = random.choice(users)
-
+       
         event = Event(
             title=title,
             description=description,
@@ -61,12 +60,30 @@ with app.app_context():
             end_time=end_time,
             organizer_id=organizer.id,
             category_id=category.id,
-            user_id=user.id
+           
         )
 
         events.append(event)
 
      db.session.add_all(events)
+     db.session.commit()
+     
+     print("Seeding BookedEvents...")
+
+    # Create bookings
+     booked_events = []
+     for _ in range(5):
+        user = random.choice(users)
+        event = random.choice(events)
+
+        booked_event = BookedEvent(
+            event_id=event.id,
+            user_id=user.id
+        )
+
+        booked_events.append(booked_event)
+
+     db.session.add_all(booked_events)
      db.session.commit()
      
      print('Done seeding!')

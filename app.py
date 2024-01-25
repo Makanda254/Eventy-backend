@@ -5,7 +5,7 @@ from flask_restful import Api, Resource, abort
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
-from models import  User, Event, Organizer, Category, db
+from models import  User, Event, Organizer, Category, BookedEvent, db
  
 
 app = Flask(__name__)
@@ -459,8 +459,34 @@ class CategoryByID(Resource):
             
 api.add_resource(CategoryByID, '/categories/<int:id>')
 
+class BookedEvents(Resource):
+    def post(self, id):
+        data = request.get_json()
+        
+        booked_event = BookedEvent (
+            
+            event_id = data['event_id'],
+            user_id = data['user_id'],
+            
+        )
+        
+        try: 
+            db.session.add(booked_event)
+            db.session.commit()
+        
+        except Exception as e:
+            db.session.rollback()
+            abort(500, error=f"Error booking an event: {str(e)}")
+        
+        finally:
+             db.session.close()
+        
+    pass
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+    
+    
    
     
     
